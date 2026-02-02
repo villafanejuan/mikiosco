@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MIKIOSCO — Sistema de Gestión Comercial</title>
+  <meta name="description" content="MIKIOSCO: Sistema de gestión para kioscos y comercios. Caja, productos, clientes, ventas y reportes en un solo lugar." />
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e5e7eb;
+
+      /* estética “admin” como tu sistema */
+      --brand:#0b1220;         /* navy/dark */
+      --brand-2:#111b2f;       /* hover */
+      --brand-soft:#0b122014;  /* tint */
+      --ok:#16a34a;
+      --warn:#ef4444;
+
+      --radius:14px;
+      --shadow:0 10px 25px rgba(2,6,23,.08);
+      --shadow2:0 6px 16px rgba(2,6,23,.10);
+
+      --sidebarW:260px;
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:var(--bg);
+      line-height:1.4;
+    }
+
+    /* Layout */
+    .app{
+      display:grid;
+      grid-template-columns: var(--sidebarW) 1fr;
+      min-height:100vh;
+    }
+
+    /* Sidebar */
+    aside{
+      background:#fff;
+      border-right:1px solid var(--line);
+      position:sticky;
+      top:0;
+      height:100vh;
+      padding:18px 14px;
+      overflow:auto;
+    }
+
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:10px 10px 18px;
+      border-bottom:1px solid var(--line);
+      margin-bottom:14px;
+    }
+    .logo{
+      width:38px;height:38px;
+      border-radius:12px;
+      background:linear-gradient(135deg, var(--brand), #1f2a44);
+      display:grid;place-items:center;
+      color:#fff;
+      box-shadow:var(--shadow2);
+      user-select:none;
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .brand h1{
+      font-size:16px;
+      margin:0;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .brand p{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    nav{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      padding:10px 6px;
+    }
+    .navlink{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      text-decoration:none;
+      color:var(--text);
+      font-weight:600;
+      font-size:14px;
+      border:1px solid transparent;
+    }
+    .navlink:hover{
+      background:var(--bg);
+      border-color:var(--line);
+    }
+    .navlink.active{
+      background:var(--brand-soft);
+      border-color:#0b12201f;
+      color:var(--brand);
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;
+      background:var(--muted);
+      opacity:.5;
+    }
+    .navlink.active .dot{ background:var(--brand); opacity:1; }
+
+    .sidebarFooter{
+      margin-top:18px;
+      padding:12px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      margin-top:10px;
+    }
+    .pill span{
+      width:8px;height:8px;border-radius:999px;background:var(--ok);
+    }
+
+    /* Main */
+    main{
+      padding:26px 26px 40px;
+    }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:18px;
+    }
+    .topbar .title{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .topbar h2{
+      margin:0;
+      font-size:24px;
+      letter-spacing:.2px;
+    }
+    .topbar p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:13px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:0 1px 0 rgba(2,6,23,.03);
+      transition:transform .06s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover{ background:#fafafa; }
+    .btn:active{ transform:translateY(1px); }
+
+    .btn.primary{
+      background:var(--brand);
+      color:#fff;
+      border-color:transparent;
+      box-shadow:var(--shadow2);
+    }
+    .btn.primary:hover{ background:var(--brand-2); }
+
+    .btn.ghost{
+      background:transparent;
+      border-color:var(--line);
+    }
+
+    /* Cards / grids */
+    .grid{
+      display:grid;
+      gap:14px;
+    }
+    .grid.kpis{
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin:14px 0 20px;
+    }
+    @media (max-width: 980px){
+      .app{ grid-template-columns:1fr; }
+      aside{ position:relative; height:auto; }
+      main{ padding:18px; }
+      .grid.kpis{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:0 2px 0 rgba(2,6,23,.02);
+    }
+    .card.pad{ padding:18px; }
+    .kpi{
+      padding:16px 18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      min-height:92px;
+    }
+    .kpi .meta{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .kpi .label{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .kpi .value{
+      font-size:22px;
+      font-weight:900;
+    }
+    .kpi .mini{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:-2px;
+    }
+    .kpi .icon{
+      width:42px;height:42px;border-radius:12px;
+      background:var(--bg);
+      border:1px solid var(--line);
+      display:grid;place-items:center;
+      color:var(--brand);
+      font-weight:900;
+      user-select:none;
+    }
+
+    .section{
+      margin:22px 0;
+    }
+    .sectionHeader{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:12px;
+    }
+    .sectionHeader h3{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .sectionHeader p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      max-width:720px;
+    }
+
+    /* Two columns content */
+    .cols{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .cols{ grid-template-columns:1fr; }
+    }
+
+    .list{
+      margin:10px 0 0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap:10px;
+    }
+    .li{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+    }
+    .check{
+      width:20px;height:20px;border-radius:7px;
+      background:rgba(22,163,74,.10);
+      border:1px solid rgba(22,163,74,.25);
+      display:grid;place-items:center;
+      color:var(--ok);
+      font-weight:900;
+      flex:0 0 auto;
+      margin-top:1px;
+    }
+    .li b{ display:block; }
+    .li span{ color:var(--muted); font-size:13px; }
+
+    /* Steps */
+    .steps{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+    .step{
+      display:flex;
+      gap:12px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      align-items:flex-start;
+    }
+    .step .n{
+      width:28px;height:28px;border-radius:10px;
+      background:var(--brand);
+      color:#fff;
+      display:grid;place-items:center;
+      font-weight:900;
+      flex:0 0 auto;
+    }
+    .step b{ display:block; }
+    .step p{ margin:4px 0 0; color:var(--muted); font-size:13px; }
+
+    /* Gallery */
+    .gallery{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 1100px){ .gallery{ grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    @media (max-width: 780px){ .gallery{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 520px){ .gallery{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+    .shot{
+      position:relative;
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      transition: transform .10s ease;
+      min-height:92px;
+    }
+    .shot:hover{ transform: translateY(-2px); }
+    .shot img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
+      background:linear-gradient(135deg, #e5e7eb, #f8fafc);
+    }
+    .shot .cap{
+      position:absolute;
+      inset:auto 8px 8px 8px;
+      padding:6px 8px;
+      border-radius:10px;
+      background:rgba(11,18,32,.85);
+      color:#fff;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      display:inline-block;
+      width:max-content;
+      max-width:calc(100% - 16px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Contact */
+    .form{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 780px){ .row{ grid-template-columns:1fr; } }
+
+    label{ font-size:12px; font-weight:800; color:var(--muted); }
+    input, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      outline:none;
+      font-size:14px;
+      background:#fff;
+    }
+    input:focus, textarea:focus{
+      border-color:#0b122044;
+      box-shadow:0 0 0 4px var(--brand-soft);
+    }
+    textarea{ min-height:110px; resize:vertical; }
+
+    .note{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:10px;
+    }
+
+    /* Modal */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      place-items:center;
+      background:rgba(2,6,23,.55);
+      padding:18px;
+      z-index:50;
+    }
+    .modal.open{ display:grid; }
+    .modalCard{
+      width:min(980px, 100%);
+      background:#fff;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.15);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+    }
+    .modalTop b{ font-size:13px; }
+    .modalClose{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .modalBody{
+      background:#0b1220;
+    }
+    .modalBody img{
+      width:100%;
+      height:auto;
+      display:block;
+      max-height:72vh;
+      object-fit:contain;
+      background:#0b1220;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      background:var(--brand);
+      color:#fff;
+      padding:12px 14px;
+      border-radius:14px;
+      box-shadow:var(--shadow2);
+      display:none;
+      gap:10px;
+      align-items:center;
+      zpx:60;
+    }
+    .toast.show{ display:flex; }
+    .toast .ok{
+      width:10px;height:10px;border-radius:999px;background:var(--ok);
+    }
+    .toast span{ font-size:13px; font-weight:800; }
+    .toast small{ font-size:12px; opacity:.85; font-weight:600; }
+
+    /* anchors offset */
+    .anchor{ scroll-margin-top: 16px; }
+    /* =========================
+   RESPONSIVE (sin romper nada)
+   ========================= */
+
+/* Evita desbordes horizontales en móviles */
+html, body { overflow-x: hidden; }
+
+/* Mejoras generales para pantallas chicas */
+@media (max-width: 980px){
+  :root{ --sidebarW: 100%; }
+
+  /* Layout pasa a 1 columna */
+  .app{ grid-template-columns: 1fr; }
+
+  /* Sidebar deja de ser sticky y se vuelve "panel" */
+  aside{
+    position: relative;
+    height: auto;
+    padding: 14px 12px;
+  }
+
+  /* Topbar se apila */
+  .topbar{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .actions{ width: 100%; justify-content: flex-start; }
+
+  /* KPIs en 1 columna (ya lo hacías, pero lo reforzamos) */
+  .grid.kpis{ grid-template-columns: 1fr; }
+
+  /* Secciones y padding más cómodos */
+  main{ padding: 16px; }
+}
+
+/* Tablet: 2 columnas en KPIs, 4 en galería si entra */
+@media (min-width: 981px) and (max-width: 1180px){
+  .grid.kpis{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+/* Ajustes de tipografía en móvil */
+@media (max-width: 520px){
+  .topbar h2{ font-size: 20px; }
+  .topbar p{ font-size: 12.5px; }
+
+  .kpi .value{ font-size: 20px; }
+
+  .btn{ width: 100%; justify-content: center; }
+  .btn + .btn{ margin-top: 8px; }
+}
+
+/* Cards internas: evita que tablas/listas se rompan */
+.card{ min-width: 0; }
+.cols{ min-width: 0; }
+.li, .step{ min-width: 0; }
+
+/* Galería: altura más agradable en pantallas chicas */
+@media (max-width: 520px){
+  .shot{ min-height: 110px; }
+}
+
+/* Modal: asegura que siempre entre bien */
+@media (max-width: 520px){
+  .modalCard{ border-radius: 14px; }
+  .modalTop{ padding: 10px; }
+  .modalClose{ padding: 8px 10px; }
+}
+
+/* =========================
+   FOOTER
+   ========================= */
+
+.footer{
+  margin-top:40px;
+  border-top:1px solid var(--line);
+  background:#fff;
+}
+
+.footer-inner{
+  max-width:1200px;
+  margin:0 auto;
+  padding:26px 20px;
+  display:grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap:24px;
+}
+
+/* Marca */
+.footer-brand{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+}
+
+.footer-logo{
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  background:var(--brand);
+  color:#fff;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  letter-spacing:.5px;
+  box-shadow:0 6px 16px rgba(2,6,23,.15);
+}
+
+.footer-brand strong{
+  display:block;
+  font-size:15px;
+}
+
+.footer-brand span{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+/* Links */
+.footer-links{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.footer-links a{
+  font-size:13px;
+  text-decoration:none;
+  color:var(--text);
+  font-weight:600;
+}
+
+.footer-links a:hover{
+  color:var(--brand);
+}
+
+/* Social */
+.footer-social{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.social-links{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.social-links a{
+  text-decoration:none;
+  color:var(--brand);
+  font-weight:600;
+}
+
+.social-links a:hover{
+  text-decoration:underline;
+}
+
+/* Bottom */
+.footer-bottom{
+  border-top:1px solid var(--line);
+  padding:12px 20px;
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  .footer-inner{
+    grid-template-columns:1fr;
+    gap:18px;
+  }
+
+  .footer-links,
+  .footer-social{
+    align-items:flex-start;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <aside>
+      <div class="brand">
+        <div class="logo">MK</div>
+        <div>
+          <h1>MIKIOSCO</h1>
+          <p>Sistema de Gestión Comercial</p>
+        </div>
+      </div>
+
+      <nav id="nav">
+        <a class="navlink active" href="#inicio"><span class="dot"></span>Inicio</a>
+        <a class="navlink" href="#que-es"><span class="dot"></span>Qué es</a>
+        <a class="navlink" href="#que-hace"><span class="dot"></span>Qué hace</a>
+        <a class="navlink" href="#como-funciona"><span class="dot"></span>Cómo funciona</a>
+        <a class="navlink" href="#para-quien"><span class="dot"></span>Para quién es</a>
+        <a class="navlink" href="#capturas"><span class="dot"></span>Capturas</a>
+        <a class="navlink" href="#contacto"><span class="dot"></span>Contacto</a>
+      </nav>
+
+      <div class="sidebarFooter">
+        <div>Versión demo • UI estilo panel administrativo</div>
+        <div class="pill"><span></span>Disponible para implementaciones</div>
+        <div class="note">Tip: reemplazá las imágenes del grid por capturas reales cuando quieras.</div>
+      </div>
+    </aside>
+
+    <main>
+      <!-- TOPBAR -->
+      <div class="topbar" id="inicio">
+        <div class="title">
+          <h2>MIKIOSCO</h2>
+          <p>Orden, control y claridad para kioscos y comercios. Caja, ventas, clientes y stock en un solo lugar.</p>
+        </div>
+        <div class="actions">
+          <a class="btn ghost" href="#capturas">Ver capturas</a>
+          <a class="btn primary" href="#contacto">Quiero info</a>
+        </div>
+      </div>
+
+      <!-- KPI CARDS -->
+      <div class="grid kpis">
+        <div class="card kpi">
+          <div class="meta">
+            <div class="label">Enfoque</div>
+            <div class="value">Gestión diaria</div>
+            <div class="mini">Operación simple y rápida</div>
+          </div>
+          <div class="icon">C</div>
+        </div>
+
+        <div class="card kpi">
+          <div class="meta">
+            <div class="label">Control</div>
+            <div class="value">Caja y ventas</div>
+            <div class="mini">Movimientos, turnos y cierre</div>
+          </div>
+          <div class="icon">$</div>
+        </div>
+
+        <div class="card kpi">
+          <div class="meta">
+            <div class="label">Orden</div>
+            <div class="value">Clientes y stock</div>
+            <div class="mini">Todo centralizado</div>
+          </div>
+          <div class="icon">≡</div>
+        </div>
+      </div>
+
+      <!-- QUÉ ES -->
+      <section class="section anchor" id="que-es">
+        <div class="sectionHeader">
+          <div>
+            <h3>Qué es MIKIOSCO</h3>
+            <p>MIKIOSCO es un sistema de gestión comercial pensado para kioscos y comercios de barrio que necesitan ordenar el día a día: ventas, caja, clientes y productos, con una interfaz clara y sin vueltas.</p>
+          </div>
+        </div>
+
+        <div class="cols">
+          <div class="card pad">
+            <b>En una frase</b>
+            <p style="margin:8px 0 0;color:var(--muted);">
+              Un panel de gestión que te permite controlar tu comercio en tiempo real y cerrar el día con números claros.
+            </p>
+
+            <ul class="list">
+              <li class="li">
+                <div class="check">✓</div>
+                <div>
+                  <b>Hecho para el ritmo real del comercio</b>
+                  <span>Rápido de usar, fácil de entender, y enfocado en lo importante.</span>
+                </div>
+              </li>
+              <li class="li">
+                <div class="check">✓</div>
+                <div>
+                  <b>Información ordenada</b>
+                  <span>Menos errores, menos “anotaciones”, más control.</span>
+                </div>
+              </li>
+              <li class="li">
+                <div class="check">✓</div>
+                <div>
+                  <b>Escalable</b>
+                  <span>Arrancás simple y podés sumar módulos a medida que crecés.</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card pad">
+            <b>Beneficios típicos</b>
+            <div class="steps">
+              <div class="step">
+                <div class="n">1</div>
+                <div>
+                  <b>Más control de la caja</b>
+                  <p>Registrás movimientos y te queda todo trazable.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="n">2</div>
+                <div>
+                  <b>Más orden en ventas</b>
+                  <p>Menos confusiones, más claridad en el cierre.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="n">3</div>
+                <div>
+                  <b>Clientes mejor gestionados</b>
+                  <p>Seguimiento de saldos y datos del cliente.</p>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px; padding:12px; border:1px dashed var(--line); border-radius:12px; color:var(--muted); font-size:13px;">
+              Nota: esta landing es explicativa y genérica; las funciones pueden variar según la implementación.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUÉ HACE -->
+      <section class="section anchor" id="que-hace">
+        <div class="sectionHeader">
+          <div>
+            <h3>Qué hace</h3>
+            <p>MIKIOSCO agrupa en un solo panel las tareas típicas del negocio: registrar ventas, controlar caja, administrar productos/categorías, gestionar clientes y consultar reportes.</p>
+          </div>
+        </div>
+
+        <div class="card pad">
+          <div class="cols">
+            <div>
+              <b>Módulos principales</b>
+              <ul class="list">
+                <li class="li"><div class="check">✓</div><div><b>Caja</b><span>Turnos, movimientos, control y cierre.</span></div></li>
+                <li class="li"><div class="check">✓</div><div><b>Ventas / Tickets</b><span>Registro de ventas y trazabilidad.</span></div></li>
+                <li class="li"><div class="check">✓</div><div><b>Productos y Categorías</b><span>Organización de catálogo, altas y ediciones.</span></div></li>
+                <li class="li"><div class="check">✓</div><div><b>Clientes</b><span>Datos, saldos y gestión general.</span></div></li>
+                <li class="li"><div class="check">✓</div><div><b>Proveedores</b><span>Administración básica y orden de compras (según configuración).</span></div></li>
+                <li class="li"><div class="check">✓</div><div><b>Reportes</b><span>Resumen para decisiones rápidas.</span></div></li>
+              </ul>
+            </div>
+
+            <div>
+              <b>Lo que mejora en la práctica</b>
+              <div class="steps">
+                <div class="step">
+                  <div class="n">A</div>
+                  <div>
+                    <b>Menos desorden</b>
+                    <p>Todo queda en un mismo lugar, sin mezclar papeles, WhatsApp y libretas.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="n">B</div>
+                  <div>
+                    <b>Más control</b>
+                    <p>Ves el estado del turno, el total actual y los movimientos registrados.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="n">C</div>
+                  <div>
+                    <b>Más agilidad</b>
+                    <p>Interfaz tipo panel administrativo: rápida, clara y directa.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+                <a class="btn primary" href="#contacto">Consultar implementación</a>
+                <a class="btn" href="#como-funciona">Ver cómo funciona</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CÓMO FUNCIONA -->
+      <section class="section anchor" id="como-funciona">
+        <div class="sectionHeader">
+          <div>
+            <h3>Cómo funciona</h3>
+            <p>Un flujo típico: iniciás turno, vendés y registrás movimientos, administrás tu catálogo y al final cerrás con datos claros.</p>
+          </div>
+        </div>
+
+        <div class="card pad">
+          <div class="steps">
+            <div class="step">
+              <div class="n">1</div>
+              <div>
+                <b>Ingresás con usuario</b>
+                <p>Acceso por credenciales. Permite separar perfiles (según configuración).</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="n">2</div>
+              <div>
+                <b>Abrís turno y controlás caja</b>
+                <p>Definís un monto inicial y registrás ingresos/egresos durante el día.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="n">3</div>
+              <div>
+                <b>Gestionás ventas y clientes</b>
+                <p>Registrás ventas, asociás clientes cuando aplica y mantenés el historial ordenado.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="n">4</div>
+              <div>
+                <b>Cerrás y revisás reportes</b>
+                <p>Revisión final del turno y reportes para decisiones rápidas.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PARA QUIÉN -->
+      <section class="section anchor" id="para-quien">
+        <div class="sectionHeader">
+          <div>
+            <h3>A quién está destinado</h3>
+            <p>MIKIOSCO está pensado para negocios que necesitan control sin complejidad: comercios chicos, medianos y emprendimientos que quieren ordenarse.</p>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+          <div class="card pad">
+            <b>Kioscos</b>
+            <p style="margin:8px 0 0;color:var(--muted);font-size:13px;">
+              Control de caja y ventas diarias, rápido y claro.
+            </p>
+          </div>
+          <div class="card pad">
+            <b>Almacenes y despensas</b>
+            <p style="margin:8px 0 0;color:var(--muted);font-size:13px;">
+              Productos organizados, clientes y control operativo.
+            </p>
+          </div>
+          <div class="card pad">
+            <b>Comercios de barrio</b>
+            <p style="margin:8px 0 0;color:var(--muted);font-size:13px;">
+              Para ordenarte sin “sistema gigante” ni curvas raras.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- CAPTURAS -->
+      <section class="section anchor" id="capturas">
+        <div class="sectionHeader">
+          <div>
+            <h3>Capturas del sistema</h3>
+            <p>Dejá este bloque como galería. Hay espacio para 25 imágenes. Por ahora son placeholders (podés reemplazarlas por tus capturas reales).</p>
+          </div>
+          <button class="btn" id="shuffleBtn" type="button">Reordenar</button>
+        </div>
+
+        <div class="card pad">
+          <div class="gallery" id="gallery">
+            <!-- 25 placeholders -->
+            <!-- Usamos inline SVG como placeholder para no depender de internet -->
+          </div>
+
+          <div class="note">
+            Tip rápido: para reemplazar, cambiá el <b>src</b> de cada imagen por tus screenshots (jpg/png).
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACTO -->
+      <section class="section anchor" id="contacto">
+        <div class="sectionHeader">
+          <div>
+            <h3>Contacto</h3>
+            <p>Dejá tus datos y contanos qué tipo de comercio tenés. Te respondemos con una propuesta y opciones de implementación.</p>
+          </div>
+        </div>
+
+        <div class="cols">
+          <div class="card pad">
+            <b>Formulario para interesados</b>
+            <form class="form" id="contactForm">
+              <div class="row">
+                <div>
+                  <label for="name">Nombre</label>
+                  <input id="name" name="name" type="text" placeholder="Tu nombre" required />
+                </div>
+                <div>
+                  <label for="biz">Negocio</label>
+                  <input id="biz" name="biz" type="text" placeholder="Kiosco / almacén / etc." />
+                </div>
+              </div>
+
+              <div class="row">
+                <div>
+                  <label for="phone">Teléfono / WhatsApp</label>
+                  <input id="phone" name="phone" type="tel" placeholder="+54 9 ..." />
+                </div>
+                <div>
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" placeholder="tu@mail.com" required />
+                </div>
+              </div>
+
+              <div>
+                <label for="msg">Mensaje</label>
+                <textarea id="msg" name="msg" placeholder="Contanos qué necesitás (caja, stock, clientes, varios usuarios, etc.)" required></textarea>
+              </div>
+
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button class="btn primary" type="submit" disabled>Enviar consulta</button>
+                <button class="btn" type="button" id="copyBtn">Copiar datos de contacto</button>
+              </div>
+
+             
+            </form>
+          </div>
+
+          <div class="card pad">
+            <b>Datos de contacto</b>
+            <p style="margin:8px 0 0;color:var(--muted);font-size:13px;">
+                Consultas e implementaciones a medida. Respondo en horario comercial.
+            </p>
+
+            <div style="margin-top:12px; display:grid; gap:10px;">
+              <div class="li">
+                <div class="check">✓</div>
+                <div>
+                  <b>WhatsApp</b>
+                  <span id="wppText">+54 9 3408-402912</span>
+                  <span id="wppText">+54 9 3408-681876</span>
+                  <span id="wppText">+54 9 3408-435237</span>
+                </div>
+              </div>
+              <div class="li">
+                <div class="check">✓</div>
+                <div>
+                  <b>Email</b>
+                  <span id="mailText">ramnelli.software@gmail.com</span>
+                  <span id="mailText">tiagoraminelli@gmail.com</span>
+                  <span id="mailText">villafanejuan@outlook.com</span>
+                </div>
+              </div>
+              <div class="li">
+                <div class="check">✓</div>
+                <div>
+                  <b>Zona</b>
+                  <span>Argentina • Implementación remota / presencial (según acuerdo)</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:14px; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--bg);">
+              <b style="font-size:13px;">¿Qué te pedimos para cotizar?</b>
+              <p style="margin:6px 0 0;color:var(--muted);font-size:13px;">
+                Tipo de comercio, cantidad de usuarios, si manejás clientes con saldo/crédito, y si querés reportes específicos.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+<footer class="footer">
+  <div class="footer-inner">
+
+    <!-- Marca -->
+    <div class="footer-brand">
+      <div class="footer-logo">MK</div>
+      <div>
+        <strong>MIKIOSCO</strong>
+        <span>Sistema de Gestión Comercial</span>
+      </div>
+    </div>
+
+
+    <!-- Redes / Créditos -->
+    <div class="footer-social">
+      <span>Desarrollado por <strong>Ramnelli Software</strong></span>
+
+      <div class="social-links">
+        <a href="https://www.instagram.com/tiagoraminelli/"
+           target="_blank"
+           rel="noopener noreferrer">
+          @tiagoraminelli
+        </a>
+
+        <a href="https://www.instagram.com/juanjovillafa_e/"
+           target="_blank"
+           rel="noopener noreferrer">
+          @juanjovillafa_e
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    © <span id="year"></span> MIKIOSCO — Todos los derechos reservados
+  </div>
+</footer>
+
+    </main>
+  </div>
+
+  <!-- Modal (lightbox) -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Vista previa de captura">
+      <div class="modalTop">
+        <b id="modalTitle">Captura</b>
+        <button class="modalClose" id="modalClose" type="button">Cerrar</button>
+      </div>
+      <div class="modalBody">
+        <img id="modalImg" alt="Captura ampliada" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="ok"></div>
+    <div>
+      <span id="toastTitle">Listo</span><br />
+      <small id="toastMsg">Acción completada.</small>
+    </div>
+  </div>
+
+
+  
+  <script>
+    // ---------- Helpers ----------
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
+
+    function showToast(title, msg){
+      const t = $("#toast");
+      $("#toastTitle").textContent = title;
+      $("#toastMsg").textContent = msg;
+      t.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+    }
+
+    // ---------- Nav active on scroll ----------
+    const sections = ["#inicio","#que-es","#que-hace","#como-funciona","#para-quien","#capturas","#contacto"]
+      .map(id => $(id))
+      .filter(Boolean);
+
+    const navLinks = $$("#nav .navlink");
+
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          const id = "#" + e.target.id;
+          navLinks.forEach(a => a.classList.toggle("active", a.getAttribute("href") === id));
+        }
+      });
+    }, { root:null, threshold:0.35 });
+
+    sections.forEach(s => io.observe(s));
+
+
+    function svgPlaceholder(i){
+      const n = String(i).padStart(2,"0");
+      const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" viewBox="0 0 800 520">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e5e7eb"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="800" height="520" fill="url(#g)"/>
+  <rect x="36" y="36" width="728" height="80" rx="16" fill="#ffffff" opacity="0.9"/>
+  <rect x="36" y="136" width="450" height="330" rx="18" fill="#ffffff" opacity="0.9"/>
+  <rect x="506" y="136" width="258" height="160" rx="18" fill="#ffffff" opacity="0.9"/>
+  <rect x="506" y="306" width="258" height="160" rx="18" fill="#ffffff" opacity="0.9"/>
+  <text x="60" y="90" font-size="32" font-family="Arial" font-weight="800" fill="#0b1220">MIKIOSCO</text>
+  <text x="60" y="118" font-size="16" font-family="Arial" font-weight="700" fill="#64748b">Placeholder de captura</text>
+  <text x="710" y="90" text-anchor="end" font-size="28" font-family="Arial" font-weight="900" fill="#0b1220">#${n}</text>
+</svg>`;
+      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+    }
+
+// ---------- Gallery (25 imágenes reales) ----------
+const gallery = $("#gallery");
+
+// Cambiá la ruta si tus imágenes están en otra carpeta
+const IMG_BASE = "img/";
+
+// Elegí exactamente 25 (podés cambiar el orden)
+const galleryImages = [
+  { file: "login.png",                 label: "Login" },
+  { file: "panel.png",                 label: "Dashboard" },
+  { file: "cash.png",                  label: "Gestión de Caja" },
+
+  { file: "products.png",              label: "Productos" },
+  { file: "product-create.png",        label: "Crear Producto" },
+  { file: "product-create-stocks.png", label: "Stock de Producto" },
+  { file: "products-edit.png",         label: "Editar Producto" },
+  { file: "product-delete.png",        label: "Eliminar Producto" },
+
+  { file: "categories.png",            label: "Categorías" },
+  { file: "categories-create.png",     label: "Crear Categoría" },
+
+  { file: "clientes.png",              label: "Clientes" },
+  { file: "clientes-index.png",        label: "Listado Clientes" },
+  { file: "clientes-create.png",       label: "Crear Cliente" },
+  { file: "clientes-edit.png",         label: "Editar Cliente" },
+  { file: "customers.png",             label: "Clientes (vista)" },
+
+  { file: "proveedores.png",           label: "Proveedores" },
+  { file: "proveedores-index.png",     label: "Listado Proveedores" },
+  { file: "Proveedores-create.png",    label: "Crear Proveedor" },
+  { file: "proveedores-edit.png",      label: "Editar Proveedor" },
+
+  { file: "sales.png",                 label: "Ventas" },
+  { file: "sales-rapido-acceso.png",   label: "Ventas Rápidas" },
+  { file: "ventas-carrito.png",        label: "Carrito" },
+  { file: "sales-listado-items.png",   label: "Listado Items" },
+
+  { file: "tickets.png",               label: "Tickets" },
+  { file: "tickets-impresion.png",     label: "Impresión Ticket" }
+];
+
+function buildGalleryWithRealImages(){
+  gallery.innerHTML = "";
+
+  galleryImages.slice(0, 25).forEach((it, idx) => {
+    const div = document.createElement("div");
+    div.className = "shot";
+    div.dataset.title = `${it.label}`;
+
+    const img = document.createElement("img");
+    img.loading = "lazy";
+    img.alt = it.label;
+    img.src = IMG_BASE + it.file;
+
+    // Fallback si falta un archivo: vuelve a placeholder
+    img.onerror = () => {
+      img.onerror = null;
+      img.src = svgPlaceholder(idx + 1);
+      div.dataset.title = `Placeholder (falta ${it.file})`;
+      cap.textContent = `Falta: ${it.file}`;
+    };
+
+    const cap = document.createElement("div");
+    cap.className = "cap";
+    cap.textContent = it.label;
+
+    div.appendChild(img);
+    div.appendChild(cap);
+    gallery.appendChild(div);
+  });
+}
+
+buildGalleryWithRealImages();
+
+    // ---------- Lightbox modal ----------
+    const modal = $("#modal");
+    const modalImg = $("#modalImg");
+    const modalTitle = $("#modalTitle");
+    const modalClose = $("#modalClose");
+
+    function openModal(src, title){
+      modalImg.src = src;
+      modalTitle.textContent = title;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden","false");
+      document.body.style.overflow = "hidden";
+    }
+    function closeModal(){
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden","true");
+      document.body.style.overflow = "";
+      modalImg.src = "";
+    }
+
+    gallery.addEventListener("click", (e)=>{
+      const shot = e.target.closest(".shot");
+      if(!shot) return;
+      const img = $("img", shot);
+      openModal(img.src, shot.dataset.title || "Captura");
+    });
+
+    modalClose.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e)=>{
+      if(e.target === modal) closeModal();
+    });
+    window.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape" && modal.classList.contains("open")) closeModal();
+    });
+
+    // ---------- Shuffle gallery ----------
+    $("#shuffleBtn").addEventListener("click", ()=>{
+      const items = $$(".shot", gallery);
+      for(let i = items.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        gallery.insertBefore(items[j], items[i]);
+      }
+      showToast("Listo", "Reordené las capturas.");
+    });
+
+    // ---------- Contact form (fake submit) ----------
+    $("#contactForm").addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const name = $("#name").value.trim() || "Listo";
+      showToast("Consulta creada", "Gracias, " + name + ". Te van a responder a la brevedad.");
+      e.target.reset();
+    });
+
+    // ---------- Copy contact ----------
+    $("#copyBtn").addEventListener("click", async ()=>{
+      const wpp = $("#wppText").textContent.trim();
+      const mail = $("#mailText").textContent.trim();
+      const txt = `WhatsApp: ${wpp}\nEmail: ${mail}\nMIKIOSCO — Solicitud de información`;
+      try{
+        await navigator.clipboard.writeText(txt);
+        showToast("Copiado", "Datos de contacto copiados al portapapeles.");
+      }catch(err){
+        showToast("No se pudo copiar", "Tu navegador bloqueó el portapapeles.");
+      }
+    });
+
+    // ---------- Year ----------
+    $("#year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
